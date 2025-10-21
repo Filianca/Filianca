@@ -24,7 +24,7 @@ const ISLAND_LINKS = [
   "https://www.arcus-atlantis.org.uk/horizons/islands-of-the-blessed-and-cursed.html",
   "https://www.arcus-atlantis.org.uk/horizons/antillia.html#satanazes",
   "https://www.youtube.com/watch?v=Janx8WPCuYw",
-  "https://www.svtplay.se/video/KZm7v4M/ogonblick-fran-svalbard/1-bamsebu-sett-fran-luften?video=visa&position=226",
+  "https://www.svtplay.se/video/KZm7v4M/ogonblick-fran-svalbard/1-bamsebu-sett-fran-luften?video=visa&position=1",
   "https://www.nauru.gov.nr/",
   "https://www.tjust.com/"
 ];
