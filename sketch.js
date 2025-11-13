@@ -2,6 +2,7 @@ let circles = [];
 let letters = [];
 let growing = false;
 let startTime;
+let nordiskKulturfondLogo;
 
 const MIN_RADIUS = 10;
 const REPULSION_RADIUS = 150;
@@ -24,28 +25,77 @@ const ISLAND_LINKS = [
   "https://www.arcus-atlantis.org.uk/horizons/islands-of-the-blessed-and-cursed.html",
   "https://www.arcus-atlantis.org.uk/horizons/antillia.html#satanazes",
   "https://www.youtube.com/watch?v=Janx8WPCuYw",
-  "https://www.svtplay.se/video/KZm7v4M/ogonblick-fran-svalbard/1-bamsebu-sett-fran-luften?video=visa&position=1",
+  "https://www.svtplay.se/video/KZm7v4M/ogonblick-fran-svalbard/1-bamsebu-sett-fran-luften?video=visa&position=226",
   "https://www.nauru.gov.nr/",
   "https://www.tjust.com/"
 ];
 
 let nextLinkIndex = 0;
 
+// --- Main circle + state ---
+let mainCircle;
+let mainExpanded = false;
+let hoverMain = false;
+let targetR;
+let animProgress = 0; // 0–1
+let animSpeed = 0.05;
+
+let showClose = false; // för krysset
+
+function preload() {
+  nordiskKulturfondLogo = loadImage('NordiskKulturfondLogo.png');
+}
+
 function setup() {
   let cnv = createCanvas(windowWidth, windowHeight);
   noStroke();
-  textFont('Caslon, serif');
-  cnv.elt.addEventListener('touchstart', e => e.preventDefault()); // disable scroll only on canvas
+  textFont('Georgia, serif');
+
+  cnv.elt.addEventListener('touchstart', e => e.preventDefault());
 
   for (let l of FLOATING_LETTERS) {
     letters.push(new FloatingLetter(random(width), random(height), l));
   }
+
+  mainCircle = {
+    x: width / 2,
+    y: height / 2,
+    baseR: min(width, height) * 0.15,
+    r: min(width, height) * 0.15
+  };
+
+  targetR = mainCircle.baseR;
 }
 
 function draw() {
   background('#f9f9f9');
 
-  // --- Circles ---
+  // --- små cirklar och bokstäver ---
+  updateCirclesAndLetters();
+
+  // --- central cirkel ---
+  drawMainCircle();
+    if (mainExpanded && nordiskKulturfondLogo) {
+    let logoW = width * 0.10; // loggans storlek proportionellt till skärmen
+    let logoH = logoW * (nordiskKulturfondLogo.height / nordiskKulturfondLogo.width);
+    imageMode(CORNER);
+    image(
+      nordiskKulturfondLogo,
+      width - logoW - 30, // 30px marginal
+      height - logoH - 30,
+      logoW,
+      logoH
+    );
+  }
+
+
+  // --- vitt kryss i övre högra hörnet ---
+  if (showClose) {
+    drawCloseButton();
+  }
+}
+
+function updateCirclesAndLetters() {
   for (let i = 0; i < circles.length; i++) {
     let c = circles[i];
     c.update();
@@ -54,11 +104,8 @@ function draw() {
       circleCollision(c, circles[j]);
     }
 
-    // Mouse/touch repulsion
-    let mx = mouseX;
-    let my = mouseY;
-    let dx = c.x - mx;
-    let dy = c.y - my;
+    let dx = c.x - mouseX;
+    let dy = c.y - mouseY;
     let d = sqrt(dx * dx + dy * dy);
     if (d < REPULSION_RADIUS && d > 0) {
       let force = map(d, 0, REPULSION_RADIUS, REPULSION_STRENGTH * (c.r / 50), 0);
@@ -66,12 +113,10 @@ function draw() {
       c.vy += (dy / d) * force;
     }
 
-    // Wall bounce
     if (c.x - c.r < 0 || c.x + c.r > width) { c.vx *= -1; c.x = constrain(c.x, c.r, width - c.r); }
     if (c.y - c.r < 0 || c.y + c.r > height) { c.vy *= -1; c.y = constrain(c.y, c.r, height - c.r); }
   }
 
-  // --- Letters ---
   for (let l of letters) {
     l.update();
     for (let c of circles) {
@@ -93,10 +138,8 @@ function draw() {
     l.display();
   }
 
-  // --- Draw circles ---
   for (let c of circles) c.display();
 
-  // --- Growing preview ---
   if (growing) {
     let radius = map(millis() - startTime, 0, 2000, 10, 200);
     radius = constrain(radius, 10, 200);
@@ -105,14 +148,98 @@ function draw() {
   }
 }
 
+function drawMainCircle() {
+  let mx = mouseX, my = mouseY;
+  let d = dist(mx, my, mainCircle.x, mainCircle.y);
+  hoverMain = (d < mainCircle.r);
+
+  // målradie beroende på tillstånd
+  if (mainExpanded) {
+    targetR = max(width, height) * 1.2;
+  } else {
+    targetR = hoverMain ? mainCircle.baseR * 1.1 : mainCircle.baseR;
+  }
+
+  // mjuk övergång med easing
+  animProgress = lerp(animProgress, 1, animSpeed);
+  let eased = easeOutElastic(animProgress);
+  mainCircle.r = lerp(mainCircle.r, targetR, eased * 0.1);
+
+  // rita cirkeln
+  fill('#111111');
+  ellipse(mainCircle.x, mainCircle.y, mainCircle.r * 2);
+
+  // text
+  fill('#f9f9f9');
+  textAlign(CENTER, CENTER);
+  textSize(mainExpanded ? 36 : 28);
+  textLeading(mainExpanded ? 50 : 40);
+
+  if (!mainExpanded) {
+    text('filianca\nfilmfestival', mainCircle.x, mainCircle.y);
+  } else {
+    text(
+      'filianca\nfilmfestival\n\nfilm\nsamtal\nworkshops\n\nkulturvillan\nmariehamn\n20–22 februari 2026',
+      mainCircle.x,
+      mainCircle.y
+    );
+  }
+}
+
+// --- vitt kryss ---
+function drawCloseButton() {
+  push();
+  stroke('#ffffff');
+  strokeWeight(3);
+  noFill();
+  let s = 30;
+  let margin = 20;
+  let x1 = width - margin - s;
+  let y1 = margin;
+  let x2 = width - margin;
+  let y2 = margin + s;
+  line(x1, y1, x2, y2);
+  line(x2, y1, x1, y2);
+  pop();
+}
+
 function handlePress(x, y) {
+  // Kolla krysset först
+  if (showClose) {
+    let s = 30;
+    let margin = 20;
+    let x1 = width - margin - s;
+    let y1 = margin;
+    let x2 = width - margin;
+    let y2 = margin + s;
+    if (x > x1 && x < x2 && y > y1 && y < y2) {
+      mainExpanded = false;
+      showClose = false;
+      animProgress = 0;
+      targetR = mainCircle.baseR;
+      return;
+    }
+  }
+
+  // Huvudcirkel
+  let d = dist(x, y, mainCircle.x, mainCircle.y);
+  if (d < mainCircle.r) {
+    if (!mainExpanded) {
+      mainExpanded = true;
+      showClose = true;
+      animProgress = 0;
+    }
+    return;
+  }
+
+  // Klick på små cirklar
   for (let c of circles) {
-    let d = dist(x, y, c.x, c.y);
-    if (d < c.r) {
+    if (dist(x, y, c.x, c.y) < c.r) {
       if (c.link) window.open(c.link, '_blank');
       return;
     }
   }
+
   startTime = millis();
   growing = true;
 }
@@ -129,39 +256,16 @@ function handleRelease(x, y) {
   }
 }
 
-// Desktop events
+// Desktop
 function mousePressed() { handlePress(mouseX, mouseY); }
 function mouseReleased() { handleRelease(mouseX, mouseY); }
-
-// Mobile events — must call window.open() directly in event
+// Mobile
 function touchStarted(e) {
-  const tx = touches[0].x;
-  const ty = touches[0].y;
-
-  // check if touching a circle
-  for (let c of circles) {
-    if (dist(tx, ty, c.x, c.y) < c.r) {
-      if (c.link) window.open(c.link, '_blank');
-      return false;
-    }
-  }
-
-  // otherwise start growing a new one
-  startTime = millis();
-  growing = true;
+  handlePress(touches[0].x, touches[0].y);
   return false;
 }
-
 function touchEnded() {
-  if (growing) {
-    growing = false;
-    let radius = map(millis() - startTime, 0, 2000, 10, 200);
-    radius = constrain(radius, 10, 200);
-    let newCircle = new Circle(mouseX, mouseY, radius);
-    newCircle.link = ISLAND_LINKS[nextLinkIndex];
-    nextLinkIndex = (nextLinkIndex + 1) % ISLAND_LINKS.length;
-    if (!overlapsAny(newCircle)) circles.push(newCircle);
-  }
+  handleRelease(mouseX, mouseY);
   return false;
 }
 
@@ -172,6 +276,15 @@ function overlapsAny(newC) {
   return false;
 }
 
+function easeOutElastic(t) {
+  const c4 = (2 * PI) / 3;
+  return t === 0
+    ? 0
+    : t === 1
+    ? 1
+    : pow(2, -10 * t) * sin((t * 10 - 0.75) * c4) + 1;
+}
+
 function circleCollision(c1, c2) {
   let dx = c2.x - c1.x;
   let dy = c2.y - c1.y;
@@ -180,32 +293,16 @@ function circleCollision(c1, c2) {
   if (distSq < minDist * minDist) {
     let dist = sqrt(distSq) || 0.01;
     let overlap = (minDist - dist) / 2;
-    let nx = dx / dist;
-    let ny = dy / dist;
+    let nx = dx / dist, ny = dy / dist;
     c1.x -= nx * overlap; c1.y -= ny * overlap;
     c2.x += nx * overlap; c2.y += ny * overlap;
-    let tx = -ny, ty = nx;
-    let dpTan1 = c1.vx * tx + c1.vy * ty;
-    let dpTan2 = c2.vx * tx + c2.vy * ty;
-    let dpNorm1 = c1.vx * nx + c1.vy * ny;
-    let dpNorm2 = c2.vx * nx + c2.vy * ny;
-    let m1 = c1.r, m2 = c2.r;
-    let newNorm1 = (dpNorm1 * (m1 - m2) + 2 * m2 * dpNorm2) / (m1 + m2);
-    let newNorm2 = (dpNorm2 * (m2 - m1) + 2 * m1 * dpNorm1) / (m1 + m2);
-    c1.vx = tx * dpTan1 + nx * newNorm1;
-    c1.vy = ty * dpTan1 + ny * newNorm1;
-    c2.vx = tx * dpTan2 + nx * newNorm2;
-    c2.vy = ty * dpTan2 + ny * newNorm2;
   }
 }
 
 class Circle {
   constructor(x, y, r) {
-    this.x = x;
-    this.y = y;
-    this.r = r;
-    this.vx = 0;
-    this.vy = 0;
+    this.x = x; this.y = y; this.r = r;
+    this.vx = 0; this.vy = 0;
     this.xOff = random(1000);
     this.yOff = random(2000);
     this.noiseSpeed = 0.003;
@@ -231,13 +328,9 @@ class Circle {
 
 class FloatingLetter {
   constructor(x, y, char) {
-    this.x = x;
-    this.y = y;
-    this.char = char;
-    this.vx = random(-0.3, 0.3);
-    this.vy = random(-0.3, 0.3);
-    this.xOff = random(1000);
-    this.yOff = random(2000);
+    this.x = x; this.y = y; this.char = char;
+    this.vx = random(-0.3, 0.3); this.vy = random(-0.3, 0.3);
+    this.xOff = random(1000); this.yOff = random(2000);
     this.noiseSpeed = 0.002;
     this.size = random(20, 40);
   }
@@ -247,10 +340,8 @@ class FloatingLetter {
     this.yOff += this.noiseSpeed;
     this.vx += map(noise(this.xOff), 0, 1, -0.02, 0.02);
     this.vy += map(noise(this.yOff), 0, 1, -0.02, 0.02);
-    this.vx *= 0.98;
-    this.vy *= 0.98;
-    this.x += this.vx;
-    this.y += this.vy;
+    this.vx *= 0.98; this.vy *= 0.98;
+    this.x += this.vx; this.y += this.vy;
 
     let half = this.size / 2;
     this.x = constrain(this.x, half, width - half);
@@ -267,4 +358,8 @@ class FloatingLetter {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  mainCircle.x = width / 2;
+  mainCircle.y = height / 2;
+  mainCircle.baseR = min(width, height) * 0.15;
+  if (!mainExpanded) mainCircle.r = mainCircle.baseR;
 }
