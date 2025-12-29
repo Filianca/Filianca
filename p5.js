@@ -179,7 +179,7 @@ function drawMainCircle() {
     text('filianca\nfilmfestival', mainCircle.x, mainCircle.y);
   } else {
     text(
-      'filianca\nfilmfestival\n\nfilm\nsamtal\nworkshops\n\nkulturvillan\nmariehamn\n20–22 februari 2026',
+      'filianca filmfestival är en ny filmfestival i mariehamn. genom film, samtal, workshops och musik intresserar vi oss för öns roll i kulturen och kulturens roll på ön. arrangeras med stöd av nordisk kulturfond och ålands kulturstiftelse. i samarbete med kulturvillan, doc lounge, filmkunstskolen i kabelvåg och filmklubben chaplin.\n\nkulturvillan\nmariehamn\n20–22 februari 2026',
       mainCircle.x,
       mainCircle.y
     );
@@ -363,3 +363,4 @@ function windowResized() {
   mainCircle.baseR = min(width, height) * 0.15;
   if (!mainExpanded) mainCircle.r = mainCircle.baseR;
 }
+
