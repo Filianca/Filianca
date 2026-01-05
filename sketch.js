@@ -178,7 +178,7 @@ function drawMainCircle() {
   let bodySize  = base * 0.038;   // readable body text
 
   if (!mainExpanded) {
-    text('?', mainCircle.x, mainCircle.y);
+    text('i', mainCircle.x, mainCircle.y);
   } else {
     text(
       'filianca filmfestival är en ny filmfestival i mariehamn.\ngenom film, samtal, workshops och musik intresserar vi\noss för öns roll i kulturen och kulturens roll på ön.\n\narrangeras med stöd av nordisk kulturfond\noch ålands kulturstiftelse.\n\ni samarbete med kulturvillan, doc lounge,\nfilmkunstskolen i kabelvåg och filmklubben chaplin.\n\nkulturvillan\nmariehamn\n20–22 februari 2026\n\nfiliancafilm@gmail.com',
