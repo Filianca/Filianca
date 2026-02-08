@@ -37,10 +37,13 @@ let mainCircle;
 let mainExpanded = false;
 let hoverMain = false;
 let targetR;
-let animProgress = 0; // 0–1
+let animProgress = 0;
 let animSpeed = 0.05;
 
-let showClose = false; // för krysset
+let showClose = false;
+
+// --- NEW: ticket bubble ---
+let ticketBubble;
 
 function preload() {
   nordiskKulturfondLogo = loadImage('NordiskKulturfondLogo.png');
@@ -65,34 +68,63 @@ function setup() {
   };
 
   targetR = mainCircle.baseR;
+
+  // --- NEW: init ticket bubble ---
+  ticketBubble = {
+    x: 110,
+    y: height - 110,
+    baseR: 45,
+    r: 45,
+    label: "biljetter",
+    link: "https://www.kulturvillan.ax"
+  };
 }
 
 function draw() {
   background('#f9f9f9');
 
-  // --- små cirklar och bokstäver ---
   updateCirclesAndLetters();
-
-  // --- central cirkel ---
   drawMainCircle();
-    if (mainExpanded && nordiskKulturfondLogo) {
-    let logoW = width * 0.10; // loggans storlek proportionellt till skärmen
+
+  if (mainExpanded && nordiskKulturfondLogo) {
+    let logoW = width * 0.10;
     let logoH = logoW * (nordiskKulturfondLogo.height / nordiskKulturfondLogo.width);
-    imageMode(CORNER);
     image(
       nordiskKulturfondLogo,
-      width - logoW - 30, // 30px marginal
+      width - logoW - 30,
       height - logoH - 30,
       logoW,
       logoH
     );
   }
 
-
-  // --- vitt kryss i övre högra hörnet ---
   if (showClose) {
     drawCloseButton();
   }
+
+  // --- NEW: draw ticket bubble ---
+  drawTicketBubble();
+}
+
+function drawTicketBubble() {
+  let d = dist(mouseX, mouseY, ticketBubble.x, ticketBubble.y);
+  let hovering = d < ticketBubble.r;
+
+  let target = hovering
+    ? ticketBubble.baseR * 1.08
+    : ticketBubble.baseR;
+
+  ticketBubble.r = lerp(ticketBubble.r, target, 0.15);
+
+  push();
+  fill('#111111');
+  ellipse(ticketBubble.x, ticketBubble.y, ticketBubble.r * 2);
+
+  fill('#f9f9f9');
+  textAlign(CENTER, CENTER);
+  textSize(14);
+  text(ticketBubble.label, ticketBubble.x, ticketBubble.y);
+  pop();
 }
 
 function updateCirclesAndLetters() {
@@ -113,28 +145,18 @@ function updateCirclesAndLetters() {
       c.vy += (dy / d) * force;
     }
 
-    if (c.x - c.r < 0 || c.x + c.r > width) { c.vx *= -1; c.x = constrain(c.x, c.r, width - c.r); }
-    if (c.y - c.r < 0 || c.y + c.r > height) { c.vy *= -1; c.y = constrain(c.y, c.r, height - c.r); }
+    if (c.x - c.r < 0 || c.x + c.r > width) {
+      c.vx *= -1;
+      c.x = constrain(c.x, c.r, width - c.r);
+    }
+    if (c.y - c.r < 0 || c.y + c.r > height) {
+      c.vy *= -1;
+      c.y = constrain(c.y, c.r, height - c.r);
+    }
   }
 
   for (let l of letters) {
     l.update();
-    for (let c of circles) {
-      let dx = l.x - c.x;
-      let dy = l.y - c.y;
-      let distSq = dx * dx + dy * dy;
-      let minDist = c.r + l.size / 2;
-      if (distSq < minDist * minDist) {
-        let dist = sqrt(distSq) || 0.01;
-        let overlap = (minDist - dist) / 2;
-        let nx = dx / dist;
-        let ny = dy / dist;
-        l.x += nx * overlap;
-        l.y += ny * overlap;
-        c.x -= nx * overlap;
-        c.y -= ny * overlap;
-      }
-    }
     l.display();
   }
 
@@ -149,51 +171,54 @@ function updateCirclesAndLetters() {
 }
 
 function drawMainCircle() {
-  let mx = mouseX, my = mouseY;
-  let d = dist(mx, my, mainCircle.x, mainCircle.y);
+  let d = dist(mouseX, mouseY, mainCircle.x, mainCircle.y);
   hoverMain = (d < mainCircle.r);
 
-  // målradie beroende på tillstånd
   if (mainExpanded) {
     targetR = max(width, height) * 1.2;
   } else {
     targetR = hoverMain ? mainCircle.baseR * 1.1 : mainCircle.baseR;
   }
 
-  // mjuk övergång med easing
   animProgress = lerp(animProgress, 1, animSpeed);
   let eased = easeOutElastic(animProgress);
   mainCircle.r = lerp(mainCircle.r, targetR, eased * 0.1);
 
-  // rita cirkeln
   fill('#111111');
   ellipse(mainCircle.x, mainCircle.y, mainCircle.r * 2);
 
-  // text
   fill('#f9f9f9');
   textAlign(CENTER, CENTER);
-  let base = min(width, height);
-
-  let titleSize = base * 0.055;   // ~18–22px on phones
-  let bodySize  = base * 0.038;   // readable body text
 
   if (!mainExpanded) {
     text('i', mainCircle.x, mainCircle.y);
   } else {
     text(
-      'filianca filmfestival är en ny filmfestival i mariehamn.\ngenom film, samtal, workshops och musik intresserar vi\noss för öns roll i kulturen och kulturens roll på ön.\n\narrangeras med stöd av nordisk kulturfond\noch ålands kulturstiftelse.\n\ni samarbete med kulturvillan, doc lounge,\nfilmkunstskolen i kabelvåg och filmklubben chaplin.\n\nkulturvillan\nmariehamn\n20–22 februari 2026\n\nfiliancafilm@gmail.com',
+`filianca filmfestival är en ny filmfestival i mariehamn.
+genom film, samtal, workshops och musik intresserar vi
+oss för öns roll i kulturen och kulturens roll på ön.
+
+arrangeras med stöd av nordisk kulturfond
+och ålands kulturstiftelse.
+
+i samarbete med kulturvillan, doc lounge,
+filmkunstskolen i kabelvåg och filmklubben chaplin.
+
+kulturvillan
+mariehamn
+20–22 februari 2026
+
+filiancafilm@gmail.com`,
       mainCircle.x,
       mainCircle.y
     );
   }
 }
 
-// --- vitt kryss ---
 function drawCloseButton() {
   push();
   stroke('#ffffff');
   strokeWeight(3);
-  noFill();
   let s = 30;
   let margin = 20;
   let x1 = width - margin - s;
@@ -206,7 +231,12 @@ function drawCloseButton() {
 }
 
 function handlePress(x, y) {
-  // Kolla krysset först
+  // --- NEW: ticket bubble click ---
+  if (dist(x, y, ticketBubble.x, ticketBubble.y) < ticketBubble.r) {
+    window.open(ticketBubble.link, '_blank');
+    return;
+  }
+
   if (showClose) {
     let s = 30;
     let margin = 20;
@@ -223,7 +253,6 @@ function handlePress(x, y) {
     }
   }
 
-  // Huvudcirkel
   let d = dist(x, y, mainCircle.x, mainCircle.y);
   if (d < mainCircle.r) {
     if (!mainExpanded) {
@@ -234,7 +263,6 @@ function handlePress(x, y) {
     return;
   }
 
-  // Klick på små cirklar
   for (let c of circles) {
     if (dist(x, y, c.x, c.y) < c.r) {
       if (c.link) window.open(c.link, '_blank');
@@ -258,10 +286,9 @@ function handleRelease(x, y) {
   }
 }
 
-// Desktop
 function mousePressed() { handlePress(mouseX, mouseY); }
 function mouseReleased() { handleRelease(mouseX, mouseY); }
-// Mobile
+
 function touchStarted(e) {
   handlePress(touches[0].x, touches[0].y);
   return false;
@@ -287,35 +314,30 @@ function easeOutElastic(t) {
     : pow(2, -10 * t) * sin((t * 10 - 0.75) * c4) + 1;
 }
 
-function circleCollision(c1, c2) { 
-  let dx = c2.x - c1.x; 
-  let dy = c2.y - c1.y; 
-  let distSq = dx * dx + dy * dy; 
-  let minDist = c1.r + c2.r; 
-  if (distSq < minDist * minDist) { 
-    let dist = sqrt(distSq) || 0.01; 
-    let overlap = (minDist - dist) / 2; 
-    let nx = dx / dist; 
-    let ny = dy / dist; c1.x -= nx * overlap; c1.y -= ny * overlap; c2.x += nx * overlap; c2.y += ny * overlap; 
-    let tx = -ny, ty = nx; 
-    let dpTan1 = c1.vx * tx + c1.vy * ty; 
-    let dpTan2 = c2.vx * tx + c2.vy * ty; 
-    let dpNorm1 = c1.vx * nx + c1.vy * ny; 
-    let dpNorm2 = c2.vx * nx + c2.vy * ny; 
-    let m1 = c1.r, m2 = c2.r; 
-    let newNorm1 = (dpNorm1 * (m1 - m2) + 2 * m2 * dpNorm2) / (m1 + m2); 
-    let newNorm2 = (dpNorm2 * (m2 - m1) + 2 * m1 * dpNorm1) / (m1 + m2); 
-    c1.vx = tx * dpTan1 + nx * newNorm1; 
-    c1.vy = ty * dpTan1 + ny * newNorm1; 
-    c2.vx = tx * dpTan2 + nx * newNorm2; 
-    c2.vy = ty * dpTan2 + ny * newNorm2; 
+function circleCollision(c1, c2) {
+  let dx = c2.x - c1.x;
+  let dy = c2.y - c1.y;
+  let distSq = dx * dx + dy * dy;
+  let minDist = c1.r + c2.r;
+  if (distSq < minDist * minDist) {
+    let dist = sqrt(distSq) || 0.01;
+    let overlap = (minDist - dist) / 2;
+    let nx = dx / dist;
+    let ny = dy / dist;
+    c1.x -= nx * overlap;
+    c1.y -= ny * overlap;
+    c2.x += nx * overlap;
+    c2.y += ny * overlap;
   }
 }
 
 class Circle {
   constructor(x, y, r) {
-    this.x = x; this.y = y; this.r = r;
-    this.vx = 0; this.vy = 0;
+    this.x = x;
+    this.y = y;
+    this.r = r;
+    this.vx = 0;
+    this.vy = 0;
     this.xOff = random(1000);
     this.yOff = random(2000);
     this.noiseSpeed = 0.003;
@@ -341,9 +363,13 @@ class Circle {
 
 class FloatingLetter {
   constructor(x, y, char) {
-    this.x = x; this.y = y; this.char = char;
-    this.vx = random(-0.3, 0.3); this.vy = random(-0.3, 0.3);
-    this.xOff = random(1000); this.yOff = random(2000);
+    this.x = x;
+    this.y = y;
+    this.char = char;
+    this.vx = random(-0.3, 0.3);
+    this.vy = random(-0.3, 0.3);
+    this.xOff = random(1000);
+    this.yOff = random(2000);
     this.noiseSpeed = 0.002;
     this.size = random(20, 40);
   }
@@ -353,12 +379,10 @@ class FloatingLetter {
     this.yOff += this.noiseSpeed;
     this.vx += map(noise(this.xOff), 0, 1, -0.02, 0.02);
     this.vy += map(noise(this.yOff), 0, 1, -0.02, 0.02);
-    this.vx *= 0.98; this.vy *= 0.98;
-    this.x += this.vx; this.y += this.vy;
-
-    let half = this.size / 2;
-    this.x = constrain(this.x, half, width - half);
-    this.y = constrain(this.y, half, height - half);
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+    this.x += this.vx;
+    this.y += this.vy;
   }
 
   display() {
@@ -375,4 +399,8 @@ function windowResized() {
   mainCircle.y = height / 2;
   mainCircle.baseR = min(width, height) * 0.15;
   if (!mainExpanded) mainCircle.r = mainCircle.baseR;
+
+  // --- NEW: keep ticket bubble anchored ---
+  ticketBubble.x = 110;
+  ticketBubble.y = height - 110;
 }
