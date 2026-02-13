@@ -69,8 +69,8 @@ function setup() {
 
   // --- NEW: init ticket bubble ---
   ticketBubble = {
-    x: 150,
-    y: height - 150,
+    x: 230,
+    y: height - 230,
     baseR: 80,
     r: 80,
     label: "biljetter",
