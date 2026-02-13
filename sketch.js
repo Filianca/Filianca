@@ -217,8 +217,8 @@ function drawCloseButton() {
   push();
   stroke('#ffffff');
   strokeWeight(3);
-  let s = 30;
-  let margin = 20;
+  let s = 40;
+  let margin = 30;
   let x1 = width - margin - s;
   let y1 = margin;
   let x2 = width - margin;
@@ -236,8 +236,8 @@ function handlePress(x, y) {
   }
 
   if (showClose) {
-    let s = 30;
-    let margin = 20;
+    let s = 40;
+    let margin = 30;
     let x1 = width - margin - s;
     let y1 = margin;
     let x2 = width - margin;
@@ -317,17 +317,49 @@ function circleCollision(c1, c2) {
   let dy = c2.y - c1.y;
   let distSq = dx * dx + dy * dy;
   let minDist = c1.r + c2.r;
+
   if (distSq < minDist * minDist) {
     let dist = sqrt(distSq) || 0.01;
     let overlap = (minDist - dist) / 2;
+
+    // Normal vector
     let nx = dx / dist;
     let ny = dy / dist;
+
+    // Push apart (same as before)
     c1.x -= nx * overlap;
     c1.y -= ny * overlap;
     c2.x += nx * overlap;
     c2.y += ny * overlap;
+
+    // Tangent vector
+    let tx = -ny;
+    let ty = nx;
+
+    // Dot products
+    let dpTan1 = c1.vx * tx + c1.vy * ty;
+    let dpTan2 = c2.vx * tx + c2.vy * ty;
+
+    let dpNorm1 = c1.vx * nx + c1.vy * ny;
+    let dpNorm2 = c2.vx * nx + c2.vy * ny;
+
+    // Mass = radius (same as second example)
+    let m1 = c1.r;
+    let m2 = c2.r;
+
+    // Elastic collision
+    let newNorm1 =
+      (dpNorm1 * (m1 - m2) + 2 * m2 * dpNorm2) / (m1 + m2);
+    let newNorm2 =
+      (dpNorm2 * (m2 - m1) + 2 * m1 * dpNorm1) / (m1 + m2);
+
+    c1.vx = tx * dpTan1 + nx * newNorm1;
+    c1.vy = ty * dpTan1 + ny * newNorm1;
+    c2.vx = tx * dpTan2 + nx * newNorm2;
+    c2.vy = ty * dpTan2 + ny * newNorm2;
   }
 }
+
 
 class Circle {
   constructor(x, y, r) {
