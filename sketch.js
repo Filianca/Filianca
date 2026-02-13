@@ -54,8 +54,6 @@ function setup() {
   noStroke();
   textFont('Georgia, serif');
 
-  cnv.elt.addEventListener('touchstart', e => e.preventDefault());
-
   for (let l of FLOATING_LETTERS) {
     letters.push(new FloatingLetter(random(width), random(height), l));
   }
@@ -71,10 +69,10 @@ function setup() {
 
   // --- NEW: init ticket bubble ---
   ticketBubble = {
-    x: 110,
-    y: height - 110,
-    baseR: 45,
-    r: 45,
+    x: 150,
+    y: height - 150,
+    baseR: 80,
+    r: 80,
     label: "biljetter",
     link: "https://www.kulturvillan.ax"
   };
@@ -122,7 +120,7 @@ function drawTicketBubble() {
 
   fill('#f9f9f9');
   textAlign(CENTER, CENTER);
-  textSize(14);
+ textSize(ticketBubble.r * 0.35);
   text(ticketBubble.label, ticketBubble.x, ticketBubble.y);
   pop();
 }
@@ -194,18 +192,18 @@ function drawMainCircle() {
     text('i', mainCircle.x, mainCircle.y);
   } else {
     text(
-`filianca filmfestival är en ny filmfestival i mariehamn.
-genom film, samtal, workshops och musik intresserar vi
+`Filianca filmfestival är en ny filmfestival i mariehamn.
+Genom film, samtal, workshops och musik intresserar vi
 oss för öns roll i kulturen och kulturens roll på ön.
 
-arrangeras med stöd av nordisk kulturfond
+Arrangeras med stöd av nordisk kulturfond
 och ålands kulturstiftelse.
 
-i samarbete med kulturvillan, doc lounge,
+I samarbete med kulturvillan, doc lounge,
 filmkunstskolen i kabelvåg och filmklubben chaplin.
 
-kulturvillan
-mariehamn
+Kulturvillan
+Mariehamn
 20–22 februari 2026
 
 filiancafilm@gmail.com`,
