@@ -231,7 +231,7 @@ function drawCloseButton() {
 function handlePress(x, y) {
   // --- NEW: ticket bubble click ---
   if (dist(x, y, ticketBubble.x, ticketBubble.y) < ticketBubble.r) {
-    window.open(ticketBubble.link, '_blank');
+    window.location.href = ticketBubble.link;
     return;
   }
 
