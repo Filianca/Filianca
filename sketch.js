@@ -101,28 +101,7 @@ function draw() {
   }
 
   // --- NEW: draw ticket bubble ---
-  drawTicketBubble();
-}
-
-function drawTicketBubble() {
-  let d = dist(mouseX, mouseY, ticketBubble.x, ticketBubble.y);
-  let hovering = d < ticketBubble.r;
-
-  let target = hovering
-    ? ticketBubble.baseR * 1.08
-    : ticketBubble.baseR;
-
-  ticketBubble.r = lerp(ticketBubble.r, target, 0.15);
-
-  push();
-  fill('#111111');
-  ellipse(ticketBubble.x, ticketBubble.y, ticketBubble.r * 2);
-
-  fill('#f9f9f9');
-  textAlign(CENTER, CENTER);
- textSize(ticketBubble.r * 0.35);
-  text(ticketBubble.label, ticketBubble.x, ticketBubble.y);
-  pop();
+  //drawTicketBubble();
 }
 
 function updateCirclesAndLetters() {
